@@ -1,33 +1,35 @@
 import java.util.concurrent.Flow;
-import java.util.ArrayList;
-import java.util.concurrent.Flow.Subscriber;
+import java.util.List;
+import java.util.LinkedList;
+public class StringPublisher implements Flow.Publisher{
 
-public class StringPublisher implements Flow.Publisher {
+    public List<StringSubscriber> subscribers;
 
-	private ArrayList<StringSubscriber> subscriptions;
-	private boolean isSub;
+    public StringPublisher(){
+        this.subscribers = new LinkedList<>();
+    }
 
-	public StringPublisher(){
-		this.subscriptions = new ArrayList<StringSubscriber>();
-	}
+    @Override
+    public void subscribe(Flow.Subscriber subscriber) {
+        if(subscribers.contains(subscriber)){
+            subscriber.onError(new IllegalStateException());
+        }else{
+            var subscription = new StringSubscription(subscriber);
+            subscriber.onSubscribe(subscription);
+            subscribers.add((StringSubscriber) subscriber);
+        }
+    }
+    
 
-	@Override
-	public void subscribe(Flow.Subscriber subscriber) {
-		if (isSub) {
-			subscriber.onError(new IllegalArgumentException());
-		} else {
-			isSub = true;
-		}
-	}
+    public void publish(String text){
+        for(var sub : subscribers){
+            sub.update(text);
+        }
+    }
 
-	public void addSub(StringSubscriber subs){
-		this.subscriptions.add(subs);
-	}
-
-	public void publish(String word) {
-		System.out.println("Input Text: " + word);
-		for (StringSubscriber i : subscriptions) {
-			i.onNext(word);
-		}
-	}
+    public void close(){
+        for(var sub : subscribers){
+            sub.writeFile();
+        }
+    }
 }

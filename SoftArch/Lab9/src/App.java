@@ -1,20 +1,20 @@
 public class App {
     public static void main(String[] args) throws Exception {
-        StringPublisher publisher = new StringPublisher();
-        AlphabetSubscriber alpha = new AlphabetSubscriber("alph");
-        NumberSubscriber numb = new NumberSubscriber("numb");
-        SymbolSubscriber symb = new SymbolSubscriber("symb");
+        
+        var publisher = new StringPublisher();
+        var alph = new AlphabetSubscriber("alph");
+        var number = new NumberSubscriber("number");
+        var symbol = new SymbolSubscriber("symbol");
 
-        publisher.addSub(alpha);
-        publisher.addSub(numb);
-        publisher.addSub(symb);
-
-        // publisher.publish("test");
-        // publisher.publish("123");
-        // publisher.publish("!@#");
+        publisher.subscribe(alph);
+        publisher.subscribe(number);
+        publisher.subscribe(symbol);
 
         publisher.publish("Test");
-        publisher.publish("+++");
-        publisher.publish("555");
+        publisher.publish("SA Lab09");
+        publisher.publish("3+6 = 9");
+        publisher.publish("So tired!!!!");
+
+        publisher.close();
     }
 }

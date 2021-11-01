@@ -1,78 +1,74 @@
-import java.util.LinkedList;
+
+import java.util.concurrent.Flow;
 import java.util.List;
+import java.util.LinkedList;
+
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.Flow;
-import java.util.concurrent.Flow.Subscription;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
+public abstract class StringSubscriber implements Flow.Subscriber{
 
-public class StringSubscriber implements Flow.Subscriber{
-    private String subscriberType;
-	private String subscriberName;
-	private String wordTemp;
-    
+    private Flow.Subscription subscription;
+    private String name;
+    private List<Object> consumedElements = new LinkedList<>();
+    private String lastText;
 
-    public StringSubscriber(){};
-    public StringSubscriber(String subType, String subName){
-		this.subscriberType = subType;
-		this.subscriberName = subName;
-		//init Text file
-		try {
-			File myObj = new File(this.subscriberName +".txt");
-			if (myObj.createNewFile()) {
-			  System.out.println("File created: " + myObj.getName());
+    public StringSubscriber(String name){
+        this.name = name;
+
+        try {
+			File file = new File(this.name +".txt");
+			if (file.createNewFile()) {
+			  System.out.println("File created: " + file.getName());
 			} else {
 			  System.out.println("File already exists.");
-			  wordTemp = new String(Files.readAllBytes(Path.of(this.subscriberName+".txt")));
+			  lastText = new String(Files.readAllBytes(Path.of(this.name + ".txt")));
 			}
-		  } catch (IOException e) {
+		}catch (IOException e) {
 			System.out.println("An error occurred.");
 			e.printStackTrace();
-		  }
-	}
-    public void writeFile(String word){
-		try {
-			FileWriter myWriter = new FileWriter(this.subscriberName + ".txt");
-			myWriter.write(wordTemp + word + "\n");
-			myWriter.close();
-			this.onComplete();
-		  } catch (IOException e) {
-			System.out.println("An error occurred.");
-			this.onError(e);
-		  }
-        }
-
-    public boolean subTypeSeperator(String textInput) {
-        return false;
+		}
     }
 
-	public void onSubscribe(Flow.Subscription subscription) {
+    public abstract void update(String text);
+
+    @Override
+    public void onSubscribe(Flow.Subscription subscription) {
+        this.subscription = subscription;
+        subscription.request(1);
     }
 
-	public void onNext(String item) {
+    @Override
+    public void onNext(Object item) {
+        System.out.println(name + " got : " + item);
+        consumedElements.add(item);
+        subscription.request(1);
     }
-
-
 
     @Override
     public void onError(Throwable throwable) {
-        // TODO Auto-generated method stub
         throwable.printStackTrace();
-        
     }
 
     @Override
     public void onComplete() {
-        // TODO Auto-generated method stub
-        System.out.println("Complete!");
-        
+        System.out.println("Write "+ name + " already done.");
     }
-    @Override
-    public void onNext(Object item) {
-        // TODO Auto-generated method stub
-        
-    }
-    
+
+    public void writeFile(){
+		try{
+			FileWriter writer = new FileWriter(this.name + ".txt");
+			writer.write(lastText);
+            for(var element : consumedElements){
+                writer.write(element + "\n");
+            }
+			writer.close();
+			this.onComplete();
+		}catch (IOException error) {
+			System.out.println("An error occurred.");
+			this.onError(error);
+		}
+	}
 }
